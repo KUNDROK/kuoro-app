@@ -102,6 +102,17 @@ export async function enqueueLiveKitAction(opts: {
  * 3. Actualiza el estado (done / failed / retry counter).
  */
 export async function runReconciliation(): Promise<void> {
+  try {
+    await runReconciliationInner();
+  } catch (err) {
+    // Evita unhandledRejection: void runReconciliation() al arrancar tumbaría el proceso si la BD no responde o faltan tablas.
+    logger.error("reconciliation", "Ciclo de reconciliación abortado", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
+async function runReconciliationInner(): Promise<void> {
   const now = new Date();
 
   // Buscar acciones pendientes que ya pasaron el tiempo de backoff
