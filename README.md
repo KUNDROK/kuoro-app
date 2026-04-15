@@ -57,7 +57,7 @@ Stack previsto: **front Vercel**, **API Railway (Node)**, **PostgreSQL** (Neon u
 1. **Node**: el repo declara **Node ≥ 22.12** (Prisma 7.7+ rechaza 22.11). En local y en CI, usa la versión de `.node-version` en la raíz.
 2. **Prisma** (desde la raíz del repo): `npx prisma generate` (y migraciones según tu flujo: `prisma migrate deploy` en Railway si aplica).
 3. **API**: `npm run build:api` (equivale a `prisma generate` + build del workspace `@kuoro/api`).
-4. **Arranque API**: `npm run start:api` → `node apps/api/dist/apps/api/src/server.js` (salida de `tsc` con el monorepo y `paths` a contracts). Railway debe usar `PORT` inyectado (ya soportado en `config.ts`).
+4. **Arranque API**: `npm run start:api` → `node apps/api/dist/server.js` (bundle ESM con esbuild). Railway debe usar `PORT` inyectado (ya soportado en `config.ts`).
 
 ### Railway (backend)
 
