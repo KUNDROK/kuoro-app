@@ -1,8 +1,8 @@
-# Nixpacks (Railway): Node 22, OpenSSL para Prisma, limpieza antes de npm ci.
+# Nixpacks (Railway): Prisma 7.7+ exige Node ^22.12 (22.11 falla en preinstall).
 # dependsOn evita que install/build corran sin el setup de Node.
 
 [variables]
-NIXPACKS_NODE_VERSION = "22"
+NIXPACKS_NODE_VERSION = "22.12"
 
 [phases.setup]
 nixLibs = ["...", "openssl"]
