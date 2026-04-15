@@ -1,0 +1,29 @@
+{
+  "name": "kuoro",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @kuoro/web run dev",
+    "dev:api": "npm --workspace @kuoro/api run dev",
+    "build:api": "prisma generate && npm run build --workspace @kuoro/api",
+    "build:web": "npm run build --workspace @kuoro/web",
+    "start:api": "node apps/api/dist/server.js",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.7.0",
+    "dotenv": "^17.4.1",
+    "prisma": "^7.7.0"
+  }
+}

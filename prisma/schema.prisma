@@ -1,0 +1,654 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id            String         @id @default(uuid())
+  fullName      String
+  email         String         @unique
+  phone         String
+  passwordHash  String
+  emailVerified Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      AdminSession[]
+  properties    Property[]
+}
+
+model AdminSession {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  adminId   String
+  admin     AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
+// ─── Propiedad ────────────────────────────────────────────────────────────────
+
+model Property {
+  id                      String     @id @default(uuid())
+  adminId                 String
+  name                    String
+  city                    String
+  address                 String
+  nit                     String?
+  legalType               String
+  developmentShape        String
+  buildingSubtype         String?
+  structureModes          String[]
+  privateUnitTypes        String[]
+  usesCoefficients        Boolean    @default(false)
+  usesContributionModules Boolean    @default(false)
+  supportsProxies         Boolean    @default(true)
+  operationalStatus       String?
+  totalUnits              Int        @default(0)
+  createdAt               DateTime   @default(now())
+  updatedAt               DateTime   @updatedAt
+  admin                   AdminUser  @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  units                   Unit[]
+  owners                  Owner[]
+  assemblies              Assembly[]
+  communicationSettings   CommunicationSettings?
+  communicationCampaigns  CommunicationCampaign[]
+  communicationDeliveries CommunicationDelivery[]
+  documentRequests        DocumentRequest[]
+  communicationTemplates  CommunicationTemplate[]
+}
+
+// ─── Unidades y propietarios ──────────────────────────────────────────────────
+
+model Unit {
+  id                 String                   @id @default(uuid())
+  propertyId         String
+  unitType           String
+  groupingKind       String
+  groupingLabel      String
+  unitNumber         String
+  floor              String?
+  destination        String
+  privateArea        Float?
+  coefficient        Float?
+  contributionModule Float?
+  createdAt          DateTime                 @default(now())
+  property           Property                 @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unitOwners         UnitOwner[]
+  representations    AssemblyRepresentation[] @relation("RepresentedUnit")
+  documentRequests   DocumentRequest[]
+}
+
+model Owner {
+  id                       String                   @id @default(uuid())
+  propertyId               String
+  fullName                 String
+  documentType             String?
+  email                    String?
+  phone                    String?
+  document                 String?
+  participationRole        String
+  canVote                  Boolean                  @default(true)
+  receivesInvitations      Boolean                  @default(true)
+  proxyDocumentName        String?
+  proxyDocumentMimeType    String?
+  proxyDocumentData        String?                  @db.Text
+  proxyApprovalStatus      String
+  proxyRequestToken        String?                  @unique
+  proxyRequestedAt         DateTime?
+  proxyLastSubmittedAt     DateTime?
+  proxySubmittedByName     String?
+  proxySubmittedByEmail    String?
+  proxySubmittedByRole     String?
+  proxyRejectionReasons    String[]
+  proxyRejectionNote       String?
+  createdAt                DateTime                 @default(now())
+  property                 Property                 @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  unitOwners               UnitOwner[]
+  representationsAsRep     AssemblyRepresentation[] @relation("RepresentativeOwner")
+  representationsAsPrincipal AssemblyRepresentation[] @relation("PrincipalOwner")
+  documentRequests         DocumentRequest[]
+}
+
+model UnitOwner {
+  id                  String   @id @default(uuid())
+  unitId              String
+  ownerId             String
+  isPrimary           Boolean  @default(false)
+  ownershipPercentage Float?
+  createdAt           DateTime @default(now())
+  unit                Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  owner               Owner    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@unique([unitId, ownerId])
+}
+
+// ─── Asambleas ────────────────────────────────────────────────────────────────
+
+model Assembly {
+  id                    String                @id @default(uuid())
+  propertyId            String
+  title                 String
+  type                  String
+  modality              String
+  status                String
+  scheduledAt           DateTime
+  conferenceService     String
+  location              String?
+  virtualAccessUrl      String?
+  notes                 String?
+  votingBasis           String
+  allowsSecondCall      Boolean               @default(false)
+  secondCallScheduledAt DateTime?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  property              Property              @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  agendaItems           AgendaItem[]
+  documents             AssemblyDocument[]
+  invitations           AssemblyInvitation[]
+  accessConfig          AssemblyAccessConfig?
+  accessGrants          AssemblyAccessGrant[]
+  voteResults           AssemblyVoteResult[]
+  speakerQueue          SpeakerQueueEntry[]
+  votingSessions        VotingSession[]
+  representations       AssemblyRepresentation[]
+  communicationCampaigns CommunicationCampaign[]
+}
+
+model AgendaItem {
+  id                 String             @id @default(uuid())
+  assemblyId         String
+  title              String
+  description        String?
+  slideTitle         String?
+  slideContent       String?            @db.Text
+  speakerNotes       String?            @db.Text
+  votePrompt         String?
+  type               String
+  votingRule         String
+  requiresAttachment Boolean            @default(false)
+  order              Int
+  status             String
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  assembly           Assembly           @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  documents          AssemblyDocument[]
+}
+
+model AssemblyDocument {
+  id               String      @id @default(uuid())
+  assemblyId       String
+  agendaItemId     String?
+  title            String
+  documentName     String
+  documentMimeType String?
+  documentData     String      @db.Text
+  category         String
+  createdAt        DateTime    @default(now())
+  assembly         Assembly    @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  agendaItem       AgendaItem? @relation(fields: [agendaItemId], references: [id], onDelete: SetNull)
+}
+
+model AssemblyInvitation {
+  id         String   @id @default(uuid())
+  assemblyId String
+  unitId     String
+  sentAt     DateTime
+  channel    String
+  status     String
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  assembly   Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+}
+
+model AssemblyAccessConfig {
+  id                       String   @id @default(uuid())
+  assemblyId               String   @unique
+  sessionAccessMode        String
+  identityValidationMethod String
+  otpChannel               String
+  requireDocumentMatch     Boolean  @default(false)
+  enableLobby              Boolean  @default(false)
+  allowCompanions          Boolean  @default(false)
+  oneActiveVoterPerUnit    Boolean  @default(true)
+  fallbackManualValidation Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  assembly                 Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+}
+
+model AssemblyAccessGrant {
+  id                    String   @id @default(uuid())
+  assemblyId            String
+  unitId                String
+  deliveryChannel       String
+  validationMethod      String
+  preRegistrationStatus String
+  dispatchStatus        String
+  note                  String?
+  /// Token único de acceso entregado a la unidad para participar en votaciones.
+  /// Se genera automáticamente al crear el grant y se incluye en el enlace de invitación.
+  accessToken           String?  @unique @default(uuid())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  assembly              Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  votes                 Vote[]
+
+  @@unique([assemblyId, unitId])
+}
+
+model AssemblyVoteResult {
+  id               String   @id @default(uuid())
+  assemblyId       String
+  agendaItemId     String?
+  question         String   @db.Text
+  votingRule       String
+  yesVotes         Float    @default(0)
+  noVotes          Float    @default(0)
+  abstainVotes     Float    @default(0)
+  blankVotes       Float    @default(0)
+  totalCoefficient Float    @default(100)
+  approved         Boolean  @default(false)
+  closedAt         DateTime @default(now())
+  createdAt        DateTime @default(now())
+  assembly         Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+}
+
+// ─── Conferencia LiveKit ───────────────────────────────────────────────────────
+
+/**
+ * Entrada persistida de la cola de participación (turno de palabra).
+ *
+ * Estados válidos: waiting | approved | speaking | done | rejected | cancelled | expired
+ *
+ * Transiciones permitidas:
+ *   waiting  → approved | rejected | cancelled
+ *   approved → speaking | rejected | cancelled
+ *   speaking → done | expired   (done = manual por admin, expired = cronómetro)
+ */
+model SpeakerQueueEntry {
+  id                   String    @id @default(uuid())
+  assemblyId           String
+  propertyId           String
+  roomName             String
+  participantIdentity  String
+  participantName      String
+  status               String    @default("waiting")
+  mode                 String?                         // "mic" | "mic_camera"
+  durationSeconds      Int?
+  requestedAt          DateTime  @default(now())
+  approvedAt           DateTime?
+  approvedByAdminId    String?
+  speakingStartedAt    DateTime?
+  speakingEndsAt       DateTime?
+  finishedAt           DateTime?
+  rejectedAt           DateTime?
+  cancelledAt          DateTime?
+  expiredAt            DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  assembly             Assembly  @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+
+  // Índices para consultas frecuentes
+  @@index([assemblyId, status])
+  @@index([assemblyId, participantIdentity])
+  @@index([assemblyId, speakingEndsAt])
+  @@index([propertyId, assemblyId])
+}
+
+/**
+ * Cola de acciones LiveKit pendientes de confirmación.
+ *
+ * Cuando una operación contra LiveKit falla (revoke, elevate, mute),
+ * se registra aquí para que el job de reconciliación la reintente.
+ *
+ * actionType:
+ *   - revoke_speaker   — revocar permisos de publicación
+ *   - elevate_speaker  — elevar permisos (reconexión)
+ *   - mute_tracks      — silenciar tracks activos
+ *
+ * status:
+ *   - pending  — pendiente de procesar
+ *   - retrying — en proceso de reintento
+ *   - done     — completada exitosamente
+ *   - failed   — agotó todos los intentos
+ */
+model LiveKitPendingAction {
+  id                   String    @id @default(uuid())
+  assemblyId           String
+  propertyId           String
+  roomName             String
+  participantIdentity  String
+  actionType           String    // revoke_speaker | elevate_speaker | mute_tracks
+  payload              String?   @db.Text  // JSON: modalidad, fuentes, etc.
+  status               String    @default("pending")
+  attempts             Int       @default(0)
+  maxAttempts          Int       @default(5)
+  lastAttemptAt        DateTime?
+  lastError            String?   @db.Text
+  resolvedAt           DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([status, createdAt])
+  @@index([assemblyId, participantIdentity])
+}
+
+// ─── Votación digital ─────────────────────────────────────────────────────────
+
+/**
+ * Sesión de votación dentro de una asamblea.
+ *
+ * El administrador abre una sesión, los asistentes elegibles emiten su voto,
+ * y el administrador la cierra. El resultado agregado se calcula desde los
+ * votos individuales al cerrar.
+ *
+ * status: open | closed | cancelled
+ */
+model VotingSession {
+  id              String    @id @default(uuid())
+  propertyId      String
+  assemblyId      String
+  agendaItemId    String?
+  question        String    @db.Text
+  votingRule      String    // simple | dos_tercios | unanimidad
+  votingBasis     String    // coeficientes | modulos | unidad
+  status          String    @default("open")
+  openedAt        DateTime  @default(now())
+  closedAt        DateTime?
+  openedByAdminId String
+  /// Campos calculados al cerrar la sesión
+  yesCount        Int?
+  noCount         Int?
+  abstainCount    Int?
+  blankCount      Int?
+  totalWeight     Float?
+  yesWeight       Float?
+  noWeight        Float?
+  abstainWeight   Float?
+  approved        Boolean?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  assembly Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  votes    Vote[]
+
+  @@index([assemblyId, status])
+  @@index([propertyId, assemblyId])
+}
+
+/**
+ * Voto individual emitido por una unidad en una sesión de votación.
+ *
+ * La restricción única en (votingSessionId, unitId) garantiza que
+ * cada unidad solo puede votar una vez por sesión, incluso si hay
+ * múltiples dispositivos o reconexiones.
+ */
+model Vote {
+  id                  String   @id @default(uuid())
+  votingSessionId     String
+  propertyId          String
+  assemblyId          String
+  unitId              String
+  ownerId             String?
+  participantIdentity String
+  voteValue           String   // yes | no | abstain | blank
+  weight              Float    @default(1)
+  castAt              DateTime @default(now())
+  createdAt           DateTime @default(now())
+  /// Representation used to authorize this vote (null for legacy access-grant flow)
+  representationId    String?
+  representationType  String?  // owner | proxy | authorized_representative
+
+  votingSession    VotingSession           @relation(fields: [votingSessionId], references: [id])
+  accessGrant      AssemblyAccessGrant?    @relation(fields: [accessGrantId], references: [id])
+  accessGrantId    String?
+  representation   AssemblyRepresentation? @relation(fields: [representationId], references: [id])
+
+  @@unique([votingSessionId, unitId])
+  @@index([votingSessionId])
+  @@index([assemblyId])
+  @@index([unitId])
+}
+
+// ─── Representación de voto ────────────────────────────────────────────────────
+
+/**
+ * Formaliza quién vota por qué unidad en qué calidad dentro de una asamblea.
+ *
+ * representationType:
+ *   - owner                  — propietario directo con derecho propio
+ *   - proxy                  — apoderado que actúa por poder registrado
+ *   - authorized_representative — representante autorizado por otro mecanismo
+ *
+ * status:
+ *   - active             — representación válida y vigente
+ *   - revoked            — revocada por el admin
+ *   - pending_validation — creada, pendiente de validación documental
+ *
+ * Un mismo representante puede tener múltiples filas (una por unidad)
+ * compartiendo el mismo accessToken. La búsqueda por token devuelve todas.
+ *
+ * @@unique([assemblyId, representedUnitId]) — solo una representación activa
+ * por unidad por asamblea.
+ */
+model AssemblyRepresentation {
+  id                     String    @id @default(uuid())
+  propertyId             String
+  assemblyId             String
+  representedUnitId      String
+  representativeOwnerId  String?
+  representativeFullName String
+  representativeEmail    String?
+  representationType     String    // owner | proxy | authorized_representative
+  principalOwnerId       String?
+  canVote                Boolean   @default(true)
+  weight                 Float     @default(1)
+  votingBasis            String    // coeficientes | modulos | unidad
+  proofDocumentRef       String?
+  status                 String    @default("active")
+  notes                  String?
+  /// Token compartido por todas las representaciones del mismo representante en esta asamblea.
+  accessToken            String    @default(uuid())
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  assembly            Assembly  @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  representedUnit     Unit      @relation("RepresentedUnit", fields: [representedUnitId], references: [id])
+  representativeOwner Owner?    @relation("RepresentativeOwner", fields: [representativeOwnerId], references: [id])
+  principalOwner      Owner?    @relation("PrincipalOwner", fields: [principalOwnerId], references: [id])
+  votes               Vote[]
+
+  @@unique([assemblyId, representedUnitId])
+  @@index([assemblyId, accessToken])
+  @@index([assemblyId, representativeOwnerId])
+  @@index([propertyId, assemblyId])
+}
+
+/**
+ * Registro de auditoría de eventos de conferencia.
+ * Cada acción relevante genera un registro inmutable.
+ */
+model ConferenceAuditLog {
+  id                  String   @id @default(uuid())
+  assemblyId          String
+  propertyId          String
+  eventType           String   // speaker_requested | approved | rejected | speaking_started | finished | expired | reconnected | participant_joined | participant_left
+  participantIdentity String?
+  participantName     String?
+  actorAdminId        String?
+  queueEntryId        String?
+  metadata            String?  @db.Text  // JSON serializado
+  occurredAt          DateTime @default(now())
+
+  @@index([assemblyId, occurredAt])
+  @@index([assemblyId, eventType])
+}
+
+// ─── Comunicaciones multicanal (motor desacoplado de proveedores) ─────────────
+
+/// Configuración por copropiedad (tenant operativo). No codifica reglas por país en código:
+/// countryCode + presets en JSON definen el comportamiento.
+model CommunicationSettings {
+  id                       String   @id @default(uuid())
+  propertyId               String   @unique
+  countryCode              String   @default("CO")
+  locale                   String   @default("es-CO")
+  enabledChannels          String[]
+  emailEnabled             Boolean  @default(true)
+  smsEnabled               Boolean  @default(false)
+  whatsappEnabled          Boolean  @default(false)
+  /// JSON: mapa useCase → canal sugerido (ej. formal_notice → email)
+  defaultChannelsByUseCase String?  @db.Text
+  fallbackChannel          String?
+  senderDisplayName        String?
+  senderEmailFrom          String?
+  senderSmsFrom            String?
+  senderWhatsappFrom       String?
+  /// JSON: channelType → provider id (resend, twilio, meta, console, …)
+  providerBindingsJson     String?  @db.Text
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  property                 Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+}
+
+model CommunicationCampaign {
+  id                 String    @id @default(uuid())
+  propertyId         String
+  assemblyId         String?
+  name               String
+  /// convocatoria | reminder | document_request | ad_hoc | custom
+  purpose            String
+  /// all | segment | single
+  audience           String
+  audienceFilterJson String?   @db.Text
+  primaryChannels    String[]
+  fallbackChannel    String?
+  /// draft | scheduled | sending | completed | cancelled | failed
+  status             String
+  scheduledAt        DateTime?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  statsJson          String?   @db.Text
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  property           Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  assembly           Assembly? @relation(fields: [assemblyId], references: [id], onDelete: SetNull)
+  deliveries         CommunicationDelivery[]
+
+  @@index([propertyId, status])
+  @@index([assemblyId])
+}
+
+model CommunicationDelivery {
+  id                  String               @id @default(uuid())
+  propertyId          String
+  campaignId          String?
+  assemblyId          String?
+  unitId              String?
+  ownerId             String?
+  /// email | sms | whatsapp
+  channel             String
+  /// resend | twilio | console | noop | meta | …
+  providerType        String
+  /// queued | sent | delivered | opened | clicked | failed | bounced | suppressed
+  status              String
+  useCase             String?
+  trackingToken       String?              @unique
+  providerMessageId   String?
+  lastError           String?              @db.Text
+  /// Historial de eventos (webhooks): JSON array
+  eventsJson          String?              @db.Text
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  sentAt              DateTime?
+  campaign            CommunicationCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  property            Property             @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId, status])
+  @@index([ownerId])
+  @@index([campaignId])
+}
+
+/// Plantillas por canal y clave lógica (variables {{nombre}}, {{unidad}}, … en cuerpo/asunto).
+model CommunicationTemplate {
+  id              String   @id @default(uuid())
+  propertyId      String
+  templateKey     String
+  channel         String
+  name            String
+  subjectTemplate String?
+  bodyTemplate    String   @db.Text
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  property        Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, templateKey, channel])
+  @@index([propertyId, isActive])
+}
+
+// ─── Solicitudes documentales (poder como caso especial: kind = proxy_power) ─
+
+model DocumentRequest {
+  id              String                 @id @default(uuid())
+  propertyId      String
+  ownerId         String
+  unitId          String?
+  /// proxy_power | cedula | certificado | carta | otro
+  kind            String
+  /// draft | pending_upload | pending_review | approved | rejected | correction_requested
+  status          String
+  publicToken     String                 @unique
+  title           String?
+  instructions    String?                @db.Text
+  metadataJson    String?                @db.Text
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  property        Property               @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  owner           Owner                  @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  unit            Unit?                  @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  submissions     DocumentSubmission[]
+  reviews         DocumentReviewAction[]
+
+  @@index([propertyId, ownerId])
+  @@index([kind, status])
+}
+
+model DocumentSubmission {
+  id                  String                 @id @default(uuid())
+  documentRequestId   String
+  fileName            String
+  mimeType            String?
+  fileData            String                 @db.Text
+  submittedByName     String?
+  submittedByEmail    String?
+  submittedByRole     String?
+  submittedAt         DateTime               @default(now())
+  documentRequest     DocumentRequest        @relation(fields: [documentRequestId], references: [id], onDelete: Cascade)
+  reviews             DocumentReviewAction[]
+
+  @@index([documentRequestId, submittedAt])
+}
+
+model DocumentReviewAction {
+  id                  String              @id @default(uuid())
+  documentRequestId   String
+  submissionId        String?
+  actorAdminId        String
+  /// approve | reject | request_correction
+  action              String
+  reasons             String[]
+  note                String?             @db.Text
+  createdAt           DateTime            @default(now())
+  documentRequest     DocumentRequest     @relation(fields: [documentRequestId], references: [id], onDelete: Cascade)
+  submission          DocumentSubmission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+
+  @@index([documentRequestId, createdAt])
+}
