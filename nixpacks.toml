@@ -1,15 +1,19 @@
-# Nixpacks (Railway u otros): Node 22 + limpieza antes de npm ci evita EBUSY en apps/web/node_modules/.vite
-# Si el proyecto usa Railpack en lugar de Nixpacks, replica en el panel:
-#   Install: npm run railway:preinstall && npm ci   (o el install por defecto + variable CI)
-#   Build: npm run railway:build
-
-providers = ["node"]
+# Nixpacks (Railway): Node 22, OpenSSL para Prisma, limpieza antes de npm ci.
+# dependsOn evita que install/build corran sin el setup de Node.
 
 [variables]
 NIXPACKS_NODE_VERSION = "22"
 
+[phases.setup]
+nixLibs = ["...", "openssl"]
+
 [phases.install]
-cmds = ["npm run railway:preinstall", "npm ci"]
+dependsOn = ["setup"]
+cmds = ["node scripts/railway-prebuild.mjs", "npm ci"]
 
 [phases.build]
+dependsOn = ["install"]
 cmds = ["npm run railway:build"]
+
+[start]
+cmd = "npm run start:api"
