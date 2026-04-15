@@ -54,13 +54,16 @@ Stack previsto: **front Vercel**, **API Railway (Node)**, **PostgreSQL** (Neon u
 
 ### Build y arranque (monorepo)
 
-1. **Prisma** (desde la raíz del repo): `npx prisma generate` (y migraciones según tu flujo: `prisma migrate deploy` en Railway si aplica).
-2. **API**: `npm run build:api` (equivale a `prisma generate` + build del workspace `@kuoro/api`).
-3. **Arranque API**: `npm run start:api` → `node apps/api/dist/server.js`. Railway debe usar `PORT` inyectado (ya soportado en `config.ts`).
+1. **Node**: el repo declara **Node ≥ 22** (Prisma 7 y dependencias asociadas). En local y en CI, usa Node 22 (por ejemplo `.node-version` en la raíz).
+2. **Prisma** (desde la raíz del repo): `npx prisma generate` (y migraciones según tu flujo: `prisma migrate deploy` en Railway si aplica).
+3. **API**: `npm run build:api` (equivale a `prisma generate` + build del workspace `@kuoro/api`).
+4. **Arranque API**: `npm run start:api` → `node apps/api/dist/server.js`. Railway debe usar `PORT` inyectado (ya soportado en `config.ts`).
 
 ### Railway (backend)
 
-- **Build command** (ejemplo): `npm install && npm run build:api`
+- **Node 22**: el repo incluye `.node-version` y `engines.node >= 22`. En el servicio puedes fijar **`NIXPACKS_NODE_VERSION=22`** si el builder no lo detecta.
+- **Nixpacks**: con `nixpacks.toml` en la raíz, la fase **install** ejecuta `npm run railway:preinstall` (borra `apps/web/node_modules` para evitar `EBUSY` en `.vite`) y luego `npm ci`; la fase **build** ejecuta `npm run railway:build` (= solo `build:api`). **No** pongas `npm ci` otra vez en el comando de build si el instalador ya lo ejecuta (Railpack/Nixpacks suelen hacerlo y un doble `npm ci` vuelve a disparar `EBUSY`).
+- **Sin Nixpacks / un solo campo “Build”** (todo en una línea, como antes): `npm run railway:build:all-in-one` (= preinstall + `npm ci` + `build:api`).
 - **Start command**: `npm run start:api`
 - **Root directory**: raíz del monorepo (o configura subpath si tu host lo exige).
 - Define todas las variables de la tabla anterior. `APP_BASE_URL` debe ser la URL pública del front (Vercel).

@@ -10,6 +10,9 @@
     "dev:web": "npm --workspace @kuoro/web run dev",
     "dev:api": "npm --workspace @kuoro/api run dev",
     "build:api": "prisma generate && npm run build --workspace @kuoro/api",
+    "railway:preinstall": "node scripts/railway-prebuild.mjs",
+    "railway:build": "npm run build:api",
+    "railway:build:all-in-one": "node scripts/railway-prebuild.mjs && npm ci && npm run build:api",
     "build:web": "npm run build --workspace @kuoro/web",
     "start:api": "node apps/api/dist/server.js",
     "build": "npm run build --workspaces",
@@ -19,7 +22,7 @@
     "db:push": "prisma db push"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
     "@prisma/client": "^7.7.0",
