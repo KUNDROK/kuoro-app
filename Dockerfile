@@ -7,8 +7,8 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# prisma.config.ts usa env("DIRECT_URL"); generate no conecta, solo necesita URL válida.
-ENV DIRECT_URL=postgresql://build:build@127.0.0.1:5432/build
+# prisma.config.ts lee DATABASE_URL; en build no hay Postgres — URL ficticia solo para cargar config / generate.
+ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build
 
 COPY package.json package-lock.json tsconfig.base.json prisma.config.ts ./
 COPY prisma ./prisma
