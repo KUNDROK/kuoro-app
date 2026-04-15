@@ -62,7 +62,7 @@ Stack previsto: **front Vercel**, **API Railway (Node)**, **PostgreSQL** (Neon u
 ### Railway (backend)
 
 - **Dockerfile (por defecto)**: `railway.json` usa el builder **DOCKERFILE**. La imagen fija **Node 22** oficial (`node:22-bookworm-slim`), OpenSSL, prebuild, `npm ci` y `build:api`. Evita versiones intermedias de Nixpacks (p. ej. 22.11) que rompen Prisma 7.7.
-- **Pre-deploy**: antes de arrancar el contenedor se ejecuta **`npm run db:push:deploy`** (`prisma db push --skip-generate`) para crear/actualizar tablas en Postgres. Requiere **`DATABASE_URL`** en el servicio del API.
+- **Pre-deploy**: antes de arrancar el contenedor se ejecuta **`npm run db:push:deploy`** (`prisma db push`) para crear/actualizar tablas en Postgres. Requiere **`DATABASE_URL`** en el servicio del API.
 - **Nixpacks (alternativa)**: si quitas el Dockerfile y `railway.json` vuelve a Nixpacks, usa `nixpacks.toml` y **`NIXPACKS_NODE_VERSION=22.12`** (o superior). No dupliques `npm ci` en el build del panel.
 - **Start command**: `npm run start:api`
 - **Root directory**: raíz del monorepo (o configura subpath si tu host lo exige).
