@@ -55,13 +55,14 @@ Stack previsto: **front Vercel**, **API Railway (Node)**, **PostgreSQL** (Neon u
 ### Build y arranque (monorepo)
 
 1. **Node**: el repo declara **Node ≥ 22.12** (Prisma 7.7+ rechaza 22.11). En local y en CI, usa la versión de `.node-version` en la raíz.
-2. **Prisma** (desde la raíz del repo): `npx prisma generate` (y migraciones según tu flujo: `prisma migrate deploy` en Railway si aplica).
+2. **Prisma** (desde la raíz del repo): `npx prisma generate`; esquema en BD: `npm run db:push` en local o **`npm run db:push:deploy`** en el pre-deploy de Railway (`railway.json`). Cuando pases a historial de migraciones, sustituye por `prisma migrate deploy`.
 3. **API**: `npm run build:api` (equivale a `prisma generate` + build del workspace `@kuoro/api`).
 4. **Arranque API**: `npm run start:api` → `node apps/api/dist/server.js` (bundle ESM con esbuild). Railway debe usar `PORT` inyectado (ya soportado en `config.ts`).
 
 ### Railway (backend)
 
 - **Dockerfile (por defecto)**: `railway.json` usa el builder **DOCKERFILE**. La imagen fija **Node 22** oficial (`node:22-bookworm-slim`), OpenSSL, prebuild, `npm ci` y `build:api`. Evita versiones intermedias de Nixpacks (p. ej. 22.11) que rompen Prisma 7.7.
+- **Pre-deploy**: antes de arrancar el contenedor se ejecuta **`npm run db:push:deploy`** (`prisma db push --skip-generate`) para crear/actualizar tablas en Postgres. Requiere **`DATABASE_URL`** en el servicio del API.
 - **Nixpacks (alternativa)**: si quitas el Dockerfile y `railway.json` vuelve a Nixpacks, usa `nixpacks.toml` y **`NIXPACKS_NODE_VERSION=22.12`** (o superior). No dupliques `npm ci` en el build del panel.
 - **Start command**: `npm run start:api`
 - **Root directory**: raíz del monorepo (o configura subpath si tu host lo exige).

@@ -5,6 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
+    "preDeployCommand": ["npm run db:push:deploy"],
     "startCommand": "npm run start:api"
   }
 }

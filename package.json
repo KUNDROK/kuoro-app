@@ -19,7 +19,8 @@
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:push:deploy": "prisma db push --skip-generate"
   },
   "engines": {
     "node": ">=22.12.0"
