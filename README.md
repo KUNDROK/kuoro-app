@@ -61,9 +61,8 @@ Stack previsto: **front Vercel**, **API Railway (Node)**, **PostgreSQL** (Neon u
 
 ### Railway (backend)
 
-- **Node 22.12+**: el repo incluye `.node-version` y `engines.node >= 22.12`. En el servicio puedes fijar **`NIXPACKS_NODE_VERSION=22.12`** (o la misma patch que `.node-version`) si el builder no lo detecta.
-- **Nixpacks**: con `nixpacks.toml` en la raíz, la fase **install** ejecuta `npm run railway:preinstall` (borra `apps/web/node_modules` para evitar `EBUSY` en `.vite`) y luego `npm ci`; la fase **build** ejecuta `npm run railway:build` (= solo `build:api`). **No** pongas `npm ci` otra vez en el comando de build si el instalador ya lo ejecuta (Railpack/Nixpacks suelen hacerlo y un doble `npm ci` vuelve a disparar `EBUSY`).
-- **Sin Nixpacks / un solo campo “Build”** (todo en una línea, como antes): `npm run railway:build:all-in-one` (= preinstall + `npm ci` + `build:api`).
+- **Dockerfile (por defecto)**: `railway.json` usa el builder **DOCKERFILE**. La imagen fija **Node 22** oficial (`node:22-bookworm-slim`), OpenSSL, prebuild, `npm ci` y `build:api`. Evita versiones intermedias de Nixpacks (p. ej. 22.11) que rompen Prisma 7.7.
+- **Nixpacks (alternativa)**: si quitas el Dockerfile y `railway.json` vuelve a Nixpacks, usa `nixpacks.toml` y **`NIXPACKS_NODE_VERSION=22.12`** (o superior). No dupliques `npm ci` en el build del panel.
 - **Start command**: `npm run start:api`
 - **Root directory**: raíz del monorepo (o configura subpath si tu host lo exige).
 - Define todas las variables de la tabla anterior. `APP_BASE_URL` debe ser la URL pública del front (Vercel).
