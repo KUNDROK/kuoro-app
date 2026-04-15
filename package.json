@@ -14,7 +14,7 @@
     "railway:build": "npm run build:api",
     "railway:build:all-in-one": "node scripts/railway-prebuild.mjs && npm ci && npm run build:api",
     "build:web": "npm run build --workspace @kuoro/web",
-    "start:api": "node apps/api/dist/server.js",
+    "start:api": "node apps/api/dist/apps/api/src/server.js",
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "typecheck": "npm run typecheck --workspaces",
