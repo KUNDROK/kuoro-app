@@ -8,6 +8,7 @@ Plataforma para asambleas virtuales de propiedad horizontal en Colombia. Dominio
 - `apps/api`: backend, reglas de negocio y tiempo real
 - `packages/contracts`: contratos y tipos compartidos del dominio
 - `docs/AI_HANDOFF.md`: guia de continuidad para retomar el proyecto con contexto actualizado
+- `docs/AGENT_CONTEXT.md`: que documentos son vigentes vs. historicos (evita confusion con `memory/`)
 - `PRD.md`: definicion de producto
 - `ARCHITECTURE.md`: arquitectura inicial del MVP
 
@@ -25,7 +26,7 @@ La primera meta es construir bien estos flujos:
 
 El modulo de asambleas es un flujo SaaS de preparacion donde el paso 02 es un generador de presentaciones, no un simple orden del dia. El administrador define lo que quiere compartir y el sistema construye diapositivas con contenido visible para propietarios, notas para el administrador y momentos de votacion.
 
-Antes de retomar trabajo, leer `docs/AI_HANDOFF.md`, `MEMORY.md` y la memoria diaria mas reciente en `memory/`.
+Antes de retomar trabajo: **`docs/AI_HANDOFF.md`** y **`docs/AGENT_CONTEXT.md`** (evita confusion con bitacoras viejas). `MEMORY.md` = preferencias de producto; `memory/*.md` = historial por fecha — no sustituyen al codigo ni a `App.tsx`.
 
 ## Proximos pasos sugeridos
 

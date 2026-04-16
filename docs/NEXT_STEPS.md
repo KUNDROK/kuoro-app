@@ -16,7 +16,7 @@
 ## 3. Arquitectura tecnica
 
 - Evaluar migracion posterior de la API HTTP nativa a NestJS, sin romper el MVP actual.
-- Avanzar la persistencia desde JSON demo hacia Prisma/DB real cuando el dominio este mas estable.
+- Persistencia: el runtime ya usa **Prisma + PostgreSQL**; el trabajo pendiente es endurecer **migraciones** (`prisma migrate`) frente a `db push` cuando los datos lo requieran (ver README).
 - Introducir Socket.IO.
 - Disenar eventos de presencia, quorum y votacion.
 - Anadir reconexion y tolerancia a refrescos del navegador.

@@ -435,13 +435,14 @@ La arquitectura descrita arriba sigue siendo una referencia de direccion, pero e
 - `apps/web`: React + TypeScript + Vite + React Router.
 - `apps/api`: API TypeScript sobre HTTP nativo de Node. Todavia no se migro a NestJS.
 - `packages/contracts`: contratos compartidos entre web y API.
-- Persistencia de desarrollo en `apps/api/data/app-db.json`; Prisma existe en `prisma/schema.prisma` como camino de evolucion, pero no asumir que todo el runtime ya depende de Prisma.
+- **Persistencia:** PostgreSQL vía **Prisma** (`prisma/schema.prisma`, `DATABASE_URL`, `apps/api/src/lib/prisma.ts`, `apps/api/src/db.ts`). El archivo `apps/api/data/app-db.json` (si aun existe) es solo legado/demo local — **no** es la fuente de verdad del runtime en produccion.
 
-El foco funcional actual esta en asambleas:
+El foco funcional actual esta en asambleas (rutas reales en `apps/web/src/App.tsx`):
 
-- `/asambleas` es el flujo principal editable.
-- `/asamblea/preparacion` existe como cabina legacy y debe mantenerse coherente mientras no se retire.
-- `/asamblea/:assemblyId` muestra la sala en vivo.
+- `/asambleas` — listado (`AssemblyListPage`).
+- `/asambleas/:assemblyId` — cabina de preparacion y operacion (`AssemblyHubPage`).
+- `/sala/:propertyId/:assemblyId` — sala en vivo admin (`AssemblyRoomPage`).
+- `/asistente/:propertyId/:assemblyId` — sala/vista asistente (`AttendeeRoomPage`).
 
 El flujo de preparacion visible queda en 6 pasos:
 

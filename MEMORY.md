@@ -1,5 +1,7 @@
 # Memoria del Proyecto
 
+> Nota para agentes: esto resume **decisiones de producto y UX**. Para stack, rutas y persistencia vigentes, usa `docs/AGENT_CONTEXT.md` y `docs/AI_HANDOFF.md`. Las lineas que hablen de `/asambleas` como un solo editor o de archivos concretos pueden estar desfasadas respecto a `App.tsx`.
+
 - El proyecto es una plataforma SaaS para administracion de propiedad horizontal, con foco inicial en preparacion y gestion de asambleas.
 - El producto se esta orientando visualmente hacia un dashboard SaaS limpio inspirado en la referencia que el usuario creo en Figma Make, no hacia un collage de tarjetas.
 - La marca del producto es **Kuoro** (dominio **kuoro.io**). El nombre anterior de trabajo era Quorum.
@@ -27,4 +29,4 @@
   - API dev: `npm --workspace @kuoro/api run dev`
   - Web dev recomendado: `npm --workspace @kuoro/web run dev -- --host 127.0.0.1 --port 5173 --strictPort`
   - Si Vite falla con `spawn EPERM`, reintentar el comando web con permisos elevados.
-- Punto para continuar: la pagina `/asambleas` se esta convirtiendo en el flujo principal editable de preparacion. Debe mantener sidebar, topbar y Kuoro IA persistentes, mostrar los 6 pasos vigentes, permitir editar/guardar cada paso inline, y conservar `Historico` como seccion inferior para no quitar ancho al formulario. El usuario esta muy sensible a mala alineacion, bloques gigantes, botones redundantes y formularios que se vean rotos o improvisados.
+- Flujo principal de preparacion de asamblea: **`/asambleas/:assemblyId`** (`AssemblyHubPage`) con pestanas; listado en **`/asambleas`**. Debe mantener sidebar, topbar y Kuoro IA persistentes (via `PlatformShell`), pasos coherentes con el handoff, y cuidado visual (alineacion, sin bloques vacios ni botones redundantes).

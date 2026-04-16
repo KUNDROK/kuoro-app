@@ -2,6 +2,8 @@
 
 Este documento es el punto de entrada para una IA o desarrollador que retome el proyecto.
 
+**Antes de asumir rutas, persistencia o nombres de archivo:** lee `docs/AGENT_CONTEXT.md` (qué es vigente vs. bitácora histórica en `memory/`).
+
 ## Contexto de producto
 
 Kuoro es una plataforma SaaS para administracion de propiedad horizontal en Colombia, con foco actual en la preparacion y gestion de asambleas. Dominio: kuoro.io.
@@ -91,9 +93,9 @@ URLs locales frecuentes:
 
 ## Archivos clave
 
-- `apps/web/src/pages/AssemblyHubPage.tsx`: cabina principal de preparacion y sala (`/asambleas/:id`). Helpers en `assemblyHub/`.
-- `apps/web/src/pages/AssembliesPage.tsx`: listado / creacion de asambleas (nombre puede variar; ver rutas en `App.tsx`).
-- `apps/web/src/pages/AssemblyPreparationPage.tsx`: cabina legacy de preparacion si aun existe en rutas.
+- `apps/web/src/pages/AssemblyHubPage.tsx`: cabina principal de preparacion y sala (`/asambleas/:assemblyId`). Helpers en `assemblyHub/`.
+- `apps/web/src/pages/AssemblyListPage.tsx`: listado y creacion de asambleas (`/asambleas`). Rutas: `App.tsx`.
+- Archivos `AssembliesPage.tsx` / `AssemblyPreparationPage.tsx` (si existen): **no** estan montados en `App.tsx`; tratarlos como legacy hasta borrarlos o re-enrutarlos.
 - `apps/web/src/pages/AssemblyRoomPage.tsx`: sala en vivo; consume `slideTitle`, `slideContent`, `speakerNotes` y `votePrompt`.
 - `apps/web/src/pages/AdminDashboardPage.tsx`: dashboard principal y checklist de preparacion.
 - `apps/web/src/styles.css`: estilos globales; incluye clases `assemblies-*`.
@@ -124,7 +126,7 @@ Reglas actuales:
 1. Conectar un proveedor real de IA para generar diapositivas desde `description`/intencion del administrador.
 2. Definir el contrato backend para solicitar generacion: probablemente `POST /assembly-presentation/generate-slide` y/o `POST /assembly-presentation/generate-deck`.
 3. Convertir la presentacion en una experiencia mas visual durante la sala en vivo: controles de avanzar diapositiva, abrir votacion desde una diapositiva y estado activo persistente.
-4. Revisar si `AssemblyPreparationPage.tsx` debe sobrevivir o si `/asambleas` sera la unica experiencia principal.
+4. Revisar si conviene borrar por completo archivos legacy de preparacion no enlazados (`AssemblyPreparationPage`, `AssembliesPage`, etc.) para reducir ruido a agentes.
 5. Mantener `Convocatoria` y `Poderes` fuera del flujo editable de preparacion, salvo como alertas/enlaces.
 
 ## Verificacion reciente
