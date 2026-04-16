@@ -252,7 +252,8 @@ function createDefaultForm(): AssemblyConfigInput {
 
 function createEmptyAgendaItem(): AgendaItemInput {
   return {
-    title: "",
+    // El API exige título ≥ 5 caracteres; un borrador vacío haría fallar "Guardar agenda".
+    title: "Nuevo punto de agenda",
     description: "",
     slideTitle: "",
     slideContent: "",
@@ -262,6 +263,16 @@ function createEmptyAgendaItem(): AgendaItemInput {
     votingRule: "ninguna",
     requiresAttachment: false
   };
+}
+
+/** Coincide con la validación del API (`isValidAssemblyDocument`): solo anexos completos se persisten. */
+function isPersistableAssemblyDocument(doc: AssemblyDocumentInput): boolean {
+  return (
+    doc.title.trim().length >= 3 &&
+    doc.documentName.trim().length >= 1 &&
+    doc.documentData.trim().startsWith("data:") &&
+    ["convocatoria", "informe", "soporte", "presupuesto", "reglamento", "otro"].includes(doc.category)
+  );
 }
 
 function createEmptyDocument(): AssemblyDocumentInput {
@@ -815,38 +826,44 @@ export function AssemblyHubPage() {
 
   async function saveAgenda() {
     if (!property) return;
+    const agendaPayload = agenda.map((item) => ({
+      ...item,
+      title: item.title.trim(),
+      description: item.description?.trim() || undefined,
+      slideTitle: item.slideTitle?.trim() || undefined,
+      slideContent: item.slideContent?.trim() || undefined,
+      speakerNotes: item.speakerNotes?.trim() || undefined,
+      votePrompt: item.votePrompt?.trim() || undefined
+    }));
+    const invalidAgenda = agendaPayload.some(
+      (item) =>
+        item.title.length < 5 ||
+        !["informativo", "deliberativo", "votacion", "eleccion"].includes(item.type) ||
+        !["ninguna", "simple", "calificada_70", "unanimidad"].includes(item.votingRule)
+    );
+    if (invalidAgenda) {
+      toast.error("Cada punto debe tener título de al menos 5 caracteres y tipo/regla de votación válidos.");
+      return;
+    }
+    const documentsPayload = documents.filter(isPersistableAssemblyDocument).map((doc) => ({
+      title: doc.title.trim(),
+      documentName: doc.documentName.trim(),
+      documentMimeType: doc.documentMimeType?.trim() || undefined,
+      documentData: doc.documentData.trim(),
+      category: doc.category,
+      agendaItemId: doc.agendaItemId?.trim() || undefined
+    }));
     setIsSaving(true);
     try {
       const [agendaRes, docsRes] = await Promise.all([
-        saveAssemblyAgenda(
-          property.id,
-          agenda.map((item) => ({
-            ...item,
-            title: item.title.trim(),
-            description: item.description?.trim() || undefined,
-            slideTitle: item.slideTitle?.trim() || undefined,
-            slideContent: item.slideContent?.trim() || undefined,
-            speakerNotes: item.speakerNotes?.trim() || undefined,
-            votePrompt: item.votePrompt?.trim() || undefined
-          }))
-        ),
-        saveAssemblyDocuments(
-          property.id,
-          documents.map((doc) => ({
-            title: doc.title.trim(),
-            documentName: doc.documentName.trim(),
-            documentMimeType: doc.documentMimeType?.trim() || undefined,
-            documentData: doc.documentData.trim(),
-            category: doc.category,
-            agendaItemId: doc.agendaItemId?.trim() || undefined
-          }))
-        )
+        saveAssemblyAgenda(property.id, agendaPayload),
+        saveAssemblyDocuments(property.id, documentsPayload)
       ]);
       setSavedAgenda(agendaRes.agenda);
       setSavedDocuments(docsRes.documents);
       toast.success("Agenda guardada");
-    } catch {
-      toast.error("No fue posible guardar la agenda");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No fue posible guardar la agenda");
     } finally {
       setIsSaving(false);
     }
@@ -928,8 +945,8 @@ export function AssemblyHubPage() {
       });
       setAccessGrants(res.grants);
       toast.success("Configuración de acceso guardada");
-    } catch {
-      toast.error("No fue posible guardar el acceso");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No fue posible guardar el acceso");
     } finally {
       setIsSaving(false);
     }
