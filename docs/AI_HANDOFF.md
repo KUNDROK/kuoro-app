@@ -52,10 +52,25 @@ La generacion actual es local/pre-IA. Ya existe la estructura mental y de datos 
 Monorepo npm workspaces:
 
 - `apps/web`: frontend React + TypeScript + Vite + React Router.
-- `apps/api`: API TypeScript sobre HTTP nativo de Node. No es NestJS todavia.
+- `apps/api`: API TypeScript sobre HTTP nativo de Node (no NestJS). Persistencia con **Prisma + PostgreSQL** (`DATABASE_URL`). El cliente singleton es `apps/api/src/lib/prisma.ts`; `apps/api/src/db.ts` importa ese mismo cliente (no duplicar pools).
 - `packages/contracts`: tipos y contratos compartidos entre web y API.
-- `apps/api/data/app-db.json`: almacenamiento de datos de desarrollo/demo.
-- `prisma/schema.prisma`: esquema Prisma en transicion; no asumir que todo el runtime ya depende de Prisma.
+- `prisma/schema.prisma`: fuente de verdad del modelo; en produccion suele usarse `prisma db push` o migraciones segun README/Railway.
+
+Modulos API recientes (refactor incremental):
+
+- `apps/api/src/http/httpUtil.ts`: `sendJson`, `readJson`, `getBearerToken`, limite de tamano de body.
+- `apps/api/src/http/requestValidation.ts`: validadores puros de payloads (`isValidAssemblyConfig`, unidades, agenda, acceso, etc.).
+
+Hub de asamblea (web), extraccion incremental:
+
+- `apps/web/src/pages/assemblyHub/types.ts`: tipo de pestana (`HubTab`).
+- `apps/web/src/pages/assemblyHub/hubConstants.tsx`: pestanas, etapas de ciclo de vida, opciones de tipo/modalidad.
+- `apps/web/src/pages/assemblyHub/hubFormUtils.ts`: formateo, plantillas de agenda, validacion de anexos persistibles, etc.
+- `apps/web/src/pages/AssemblyHubPage.tsx`: estado, efectos y UI principal (sigue siendo grande; se puede seguir partiendo por pestana).
+
+CI en GitHub:
+
+- `.github/workflows/ci.yml`: en cada push/PR a `main`, `npm ci`, `prisma generate`, `typecheck` en workspaces y `vitest` del API.
 
 Comandos utiles:
 
@@ -64,6 +79,7 @@ Comandos utiles:
 - `npm --workspace @kuoro/web run typecheck`
 - `npm --workspace @kuoro/api run typecheck`
 - `npm --workspace @kuoro/web run build`
+- `npm exec --workspace @kuoro/api -- vitest run`
 
 URLs locales frecuentes:
 
@@ -75,14 +91,15 @@ URLs locales frecuentes:
 
 ## Archivos clave
 
-- `apps/web/src/pages/AssembliesPage.tsx`: flujo principal editable de asambleas. Aqui vive el nuevo generador de presentaciones del paso 02.
-- `apps/web/src/pages/AssemblyPreparationPage.tsx`: cabina legacy de preparacion. Debe mantenerse coherente con `/asambleas` mientras exista.
+- `apps/web/src/pages/AssemblyHubPage.tsx`: cabina principal de preparacion y sala (`/asambleas/:id`). Helpers en `assemblyHub/`.
+- `apps/web/src/pages/AssembliesPage.tsx`: listado / creacion de asambleas (nombre puede variar; ver rutas en `App.tsx`).
+- `apps/web/src/pages/AssemblyPreparationPage.tsx`: cabina legacy de preparacion si aun existe en rutas.
 - `apps/web/src/pages/AssemblyRoomPage.tsx`: sala en vivo; consume `slideTitle`, `slideContent`, `speakerNotes` y `votePrompt`.
 - `apps/web/src/pages/AdminDashboardPage.tsx`: dashboard principal y checklist de preparacion.
 - `apps/web/src/styles.css`: estilos globales; incluye clases `assemblies-*`.
 - `apps/web/src/lib/api.ts`: cliente HTTP del frontend.
-- `apps/api/src/routes.ts`: rutas HTTP y validaciones principales.
-- `apps/api/src/db.ts`: tipos y funciones de persistencia JSON.
+- `apps/api/src/routes.ts`: despacho de rutas HTTP (sigue concentrando la mayoria de handlers; validacion HTTP en `http/`).
+- `apps/api/src/db.ts`: tipos almacenados y funciones de acceso Prisma.
 - `apps/api/src/domain/assembly.ts`: builders de dashboard/sala y fallback demo de agenda/presentacion.
 - `packages/contracts/src/index.ts`: contratos compartidos; actualizar aqui antes de usar nuevos campos en web/API.
 - `memory/2026-04-13.md`: bitacora detallada de decisiones recientes.

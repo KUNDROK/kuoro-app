@@ -1,18 +1,7 @@
 import "./bootstrap-env";
 import { randomUUID } from "node:crypto";
 import { syncProxyDocumentRequestFromOwner } from "./domain/documentRequests/proxySync";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
-
-// ─── Prisma client singleton ──────────────────────────────────────────────────
-
-const pool = new Pool({
-  connectionString: process.env["DATABASE_URL"],
-  ssl: { rejectUnauthorized: false }
-});
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
+import { prisma } from "./lib/prisma";
 
 // ─── Legacy types (kept for routes.ts compatibility) ─────────────────────────
 
