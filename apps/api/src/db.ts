@@ -1287,25 +1287,39 @@ export async function replaceAssemblyAccessGrants(
   assemblyId: string,
   grants: Array<Omit<StoredAssemblyAccessGrant, "id" | "assemblyId" | "createdAt" | "updatedAt">>
 ): Promise<StoredAssemblyAccessGrant[]> {
+  // Una fila por unidad (@@unique([assemblyId, unitId])); si el cliente envía duplicados, conservar la última.
+  const byUnit = new Map<string, (typeof grants)[number]>();
+  for (const g of grants) {
+    byUnit.set(g.unitId, g);
+  }
+  const uniqueGrants = [...byUnit.values()];
+
   const rows = await prisma.$transaction(async (tx) => {
+    // Vote.accessGrantId referencia AssemblyAccessGrant sin onDelete: sin esto, deleteMany falla si hubo votos.
+    await tx.vote.updateMany({
+      where: { assemblyId, accessGrantId: { not: null } },
+      data: { accessGrantId: null }
+    });
+
     await tx.assemblyAccessGrant.deleteMany({ where: { assemblyId } });
 
-    return tx.$transaction(
-      grants.map((grant) =>
-        tx.assemblyAccessGrant.create({
-          data: {
-            id: randomUUID(),
-            assemblyId,
-            unitId: grant.unitId,
-            deliveryChannel: grant.deliveryChannel,
-            validationMethod: grant.validationMethod,
-            preRegistrationStatus: grant.preRegistrationStatus,
-            dispatchStatus: grant.dispatchStatus,
-            note: grant.note ?? null
-          }
-        })
-      )
-    );
+    const created: Awaited<ReturnType<typeof tx.assemblyAccessGrant.create>>[] = [];
+    for (const grant of uniqueGrants) {
+      const row = await tx.assemblyAccessGrant.create({
+        data: {
+          id: randomUUID(),
+          assemblyId,
+          unitId: grant.unitId,
+          deliveryChannel: grant.deliveryChannel,
+          validationMethod: grant.validationMethod,
+          preRegistrationStatus: grant.preRegistrationStatus,
+          dispatchStatus: grant.dispatchStatus,
+          note: grant.note ?? null
+        }
+      });
+      created.push(row);
+    }
+    return created;
   });
 
   return rows.map(toStoredAccessGrant);
