@@ -4,6 +4,7 @@ import type {
   AdminAssistantClientMessage,
 } from "@kuoro/contracts";
 import { buildAdminAssistantSystemPrompt } from "./knowledge";
+import { assertAdminAssistantInputWithinLimit, assertAdminAssistantRateLimit } from "./rateAndInputLimits";
 import { ADMIN_ASSISTANT_OPENAI_TOOLS, executeAdminAssistantTool } from "./toolExecutor";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
@@ -100,6 +101,9 @@ export async function runAdminAssistantChat(
   if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {
     throw Object.assign(new Error("messages es requerido"), { statusCode: 400 });
   }
+
+  assertAdminAssistantInputWithinLimit(body.messages as { role: string; content?: string }[]);
+  assertAdminAssistantRateLimit(adminId);
 
   if (!process.env["OPENAI_API_KEY"]?.trim()) {
     return {
