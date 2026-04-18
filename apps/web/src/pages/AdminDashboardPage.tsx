@@ -685,6 +685,7 @@ export function AdminDashboardPage() {
       activeSection="dashboard"
       admin={admin}
       assistantContext={assistantContext}
+      assistantScope={{ propertyId: primaryProperty?.id }}
       notificationCount={pendingProxyRequests.length + noVoterUnits}
       property={primaryProperty ?? null}
       title="Panel de control"

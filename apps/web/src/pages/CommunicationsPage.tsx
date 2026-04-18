@@ -108,6 +108,7 @@ export function CommunicationsPage() {
     <PlatformShell
       activeSection="communications"
       admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
       notificationCount={requests.length}
       property={property}
       title="Comunicaciones"

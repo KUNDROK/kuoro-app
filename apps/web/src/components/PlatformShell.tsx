@@ -1,9 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Moon, Sun, LogOut, Sparkles } from "lucide-react";
 import type { AuthResponse, PropertySummary } from "@kuoro/contracts";
 import { clearStoredToken } from "../lib/api";
+import { AdminAssistantDrawer, type AdminAssistantScope } from "./AdminAssistantDrawer";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,8 @@ type Props = {
   activeSection: PlatformSection;
   admin: AuthResponse["admin"] | null;
   assistantContext?: AssistantContext;
+  /** IDs de copropiedad/asamblea activos en la pantalla (mejoran consultas del asistente). */
+  assistantScope?: AdminAssistantScope;
   children: ReactNode;
   notificationCount?: number;
   property: PropertySummary | null;
@@ -80,12 +83,23 @@ function getInitials(name: string | undefined) {
 export function PlatformShell({
   activeSection,
   admin,
+  assistantContext,
+  assistantScope,
   children,
   notificationCount = 0,
   property,
   title
 }: Props) {
   const location = useLocation();
+
+  const [assistantOpen, setAssistantOpen] = useState(false);
+
+  const resolvedAssistantScope = useMemo((): AdminAssistantScope | undefined => {
+    const propertyId = assistantScope?.propertyId ?? property?.id;
+    const assemblyId = assistantScope?.assemblyId;
+    if (!propertyId && !assemblyId) return undefined;
+    return { propertyId, assemblyId };
+  }, [assistantScope?.propertyId, assistantScope?.assemblyId, property?.id]);
 
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const stored = window.localStorage.getItem(THEME_KEY);
@@ -427,8 +441,10 @@ export function PlatformShell({
               </div>
             )}
 
-            {/* Kuoro IA status pill */}
-            <div
+            {/* Kuoro IA — abre asistente */}
+            <button
+              type="button"
+              onClick={() => setAssistantOpen(true)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -439,12 +455,14 @@ export function PlatformShell({
                 fontSize: 11,
                 fontWeight: 500,
                 color: "var(--accent-foreground)",
-                border: "0.5px solid var(--border)"
+                border: "0.5px solid var(--border)",
+                cursor: "pointer",
+                fontFamily: "inherit",
               }}
             >
               <Sparkles size={11} />
               Kuoro IA
-            </div>
+            </button>
 
             {/* Theme toggle */}
             <button
@@ -510,6 +528,13 @@ export function PlatformShell({
           </motion.main>
         </AnimatePresence>
       </div>
+
+      <AdminAssistantDrawer
+        open={assistantOpen}
+        onClose={() => setAssistantOpen(false)}
+        scope={resolvedAssistantScope}
+        starterSuggestions={assistantContext?.suggestions}
+      />
     </div>
   );
 }

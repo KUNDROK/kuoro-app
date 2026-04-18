@@ -76,6 +76,9 @@ export function AssemblyRoomPage() {
     <PlatformShell
       activeSection="assemblies"
       admin={admin}
+      assistantScope={
+        propertyIdParam && assemblyId ? { propertyId: propertyIdParam, assemblyId } : undefined
+      }
       property={property}
       title="Sala en vivo"
     >

@@ -717,6 +717,9 @@ export function AssemblyHubPage() {
     <PlatformShell
       activeSection="assemblies"
       admin={admin}
+      assistantScope={
+        property && assemblyId ? { propertyId: property.id, assemblyId } : property ? { propertyId: property.id } : undefined
+      }
       property={property}
       title={assembly?.title ?? "Asamblea"}
     >

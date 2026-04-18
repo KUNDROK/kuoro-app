@@ -775,7 +775,13 @@ export function UnitDetailPage() {
   ];
 
   return (
-    <PlatformShell activeSection="units" admin={admin} property={property} title={unitLabel}>
+    <PlatformShell
+      activeSection="units"
+      admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
+      property={property}
+      title={unitLabel}
+    >
       <LoadingModal visible={isSubmitting} message="Guardando cambios..." />
       {isLoading ? (
         <LoadingModal variant="section" visible message="Cargando ficha de unidad..." minHeight={320} />

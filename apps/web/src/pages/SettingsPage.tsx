@@ -76,7 +76,13 @@ export function SettingsPage() {
   ];
 
   return (
-    <PlatformShell activeSection="settings" admin={admin} property={property} title="Configuración">
+    <PlatformShell
+      activeSection="settings"
+      admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
+      property={property}
+      title="Configuración"
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* Header */}
         <motion.div

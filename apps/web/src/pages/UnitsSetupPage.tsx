@@ -187,7 +187,13 @@ export function UnitsSetupPage() {
   }
 
   return (
-    <PlatformShell activeSection="units" admin={admin} property={property} title="Cargue de unidades">
+    <PlatformShell
+      activeSection="units"
+      admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
+      property={property}
+      title="Cargue de unidades"
+    >
       <LoadingModal visible={isSubmitting} message="Guardando unidades..." />
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* Header card */}

@@ -139,6 +139,7 @@ export function AssemblyListPage() {
     <PlatformShell
       activeSection="assemblies"
       admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
       property={property}
       title="Asambleas"
     >

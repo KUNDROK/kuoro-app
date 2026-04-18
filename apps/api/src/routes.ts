@@ -153,11 +153,13 @@ import { applyCommunicationWebhook } from "./domain/communications/webhookInboun
 import { sendAssemblyInvitationEmails } from "./domain/assemblyInvitations/sendAssemblyInvitationEmails";
 import type { CommunicationSettingsInput, CampaignPurpose, ChannelType } from "@kuoro/contracts";
 import type {
+  AdminAssistantChatRequest,
   ConferenceRole,
   SpeakerRequestInput,
   SpeakerApproveInput,
   CreateProxyRepresentationInput,
 } from "@kuoro/contracts";
+import { runAdminAssistantChat } from "./domain/adminAssistant/runAdminAssistantChat";
 
 // ── In-memory live-slide store ────────────────────────────────────────────────
 // Stores the current slide payload per assemblyId. Lost on server restart.
@@ -809,6 +811,27 @@ export async function routeRequest(request: IncomingMessage, response: ServerRes
       admin: toAdminProfile(admin),
       properties: properties.map(toPropertySummary)
     });
+  }
+
+  if (method === "POST" && pathname === "/api/v1/admin-assistant/chat") {
+    const admin = await requireAdmin(request, response);
+    if (!admin) return;
+
+    let body: AdminAssistantChatRequest;
+    try {
+      body = (await readJson(request)) as AdminAssistantChatRequest;
+    } catch {
+      return sendJson(response, 400, { error: "JSON inválido" });
+    }
+
+    try {
+      const result = await runAdminAssistantChat(admin.id, body);
+      return sendJson(response, 200, result);
+    } catch (err) {
+      const e = err as { statusCode?: number; message?: string };
+      const code = e.statusCode ?? 500;
+      return sendJson(response, code, { error: e.message ?? "Error del asistente" });
+    }
   }
 
   const publicProxyRequestMatch = pathname.match(/^\/api\/v1\/proxy-requests\/([^/]+)$/);

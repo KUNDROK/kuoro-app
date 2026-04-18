@@ -1,4 +1,6 @@
 import type {
+  AdminAssistantChatRequest,
+  AdminAssistantChatResponse,
   AdminLoginInput,
   AdminRegistrationInput,
   ConferenceTokenResponse,
@@ -150,6 +152,13 @@ export async function fetchMe() {
     admin: AuthResponse["admin"];
     properties: PropertySummary[];
   }>("/auth/me");
+}
+
+export async function postAdminAssistantChat(body: AdminAssistantChatRequest) {
+  return fetchRaw<AdminAssistantChatResponse>("/admin-assistant/chat", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 export async function createProperty(input: PropertyCreateInput) {

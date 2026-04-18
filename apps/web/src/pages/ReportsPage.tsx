@@ -63,6 +63,7 @@ export function ReportsPage() {
     <PlatformShell
       activeSection="reports"
       admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
       notificationCount={requests.length + noVoterUnits}
       property={property}
       title="Reportes"

@@ -128,7 +128,13 @@ export function UnitsListPage() {
   ];
 
   return (
-    <PlatformShell activeSection="units" admin={admin} property={property} title="Unidades y propietarios">
+    <PlatformShell
+      activeSection="units"
+      admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
+      property={property}
+      title="Unidades y propietarios"
+    >
       <LoadingModal visible={isLoading && units.length === 0} message="Cargando unidades..." />
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* Header */}

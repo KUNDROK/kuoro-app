@@ -753,4 +753,24 @@ export type SeedRepresentationsResult = {
   errors:  { unitId: string; reason: string }[];
 };
 
+/** Mensaje de chat hacia el asistente admin (solo user/assistant desde el cliente). */
+export type AdminAssistantClientMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export type AdminAssistantChatRequest = {
+  messages: AdminAssistantClientMessage[];
+  /** Copropiedad activa en la UI; acota herramientas y contexto. */
+  propertyId?: string;
+  /** Asamblea activa en la UI; acota herramientas y contexto. */
+  assemblyId?: string;
+};
+
+export type AdminAssistantChatResponse = {
+  message: { role: "assistant"; content: string };
+  /** true si faltaba OPENAI_API_KEY (respuesta genérica sin modelo). */
+  degraded?: boolean;
+};
+
 export * from "./communications";

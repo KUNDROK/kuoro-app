@@ -60,7 +60,13 @@ export function PropertyOverviewPage() {
   ];
 
   return (
-    <PlatformShell activeSection="property" admin={admin} property={property} title="Copropiedad">
+    <PlatformShell
+      activeSection="property"
+      admin={admin}
+      assistantScope={property ? { propertyId: property.id } : undefined}
+      property={property}
+      title="Copropiedad"
+    >
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         {/* Header card */}
         <motion.div
